@@ -34,6 +34,7 @@ async function run() {
       const foodCollection = database.collection("Foods");
       const userCollection = database.collection("Users")
       const orderCollection = database.collection("PlaceOrder")
+      const reviewCollection = database.collection("Review_area");
 
     //   food get api
     app.get('/foods', async(req,res) =>{
@@ -115,6 +116,14 @@ async function run() {
         res.send(result)
     })
 
+    // placeorder single id information
+    app.get('/placeorder/:id', async(req,res) =>{
+        const id = req.params.id;
+        const query = {_id: ObjectId(id)}
+        const result = await orderCollection.findOne(query)
+        res.send(result)
+    })
+
     // filter login user email
     app.get('/placeorder/:email', async(req,res) =>{
         const email = req.params.email;
@@ -130,6 +139,22 @@ async function run() {
             const query={_id: ObjectId(id)}
             const result = await orderCollection.deleteOne(query)
             res.json(result);
+    })
+
+    // review post api
+    app.post('/review', async(req,res) =>{
+        const review = req.body;
+        const result = await reviewCollection.insertOne(review)
+        console.log(req.body);
+        console.log(result)
+        res.json(result)
+    })
+
+    // get Review
+    app.get('/review', async(req,res) =>{
+        const cursor = reviewCollection.find({})
+        const result = await cursor.toArray()
+        res.send(result)
     })
 
 
