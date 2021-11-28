@@ -115,23 +115,18 @@ async function run() {
         const result = await cursor.toArray()
         res.send(result)
     })
-
-    // placeorder single id information
-    app.get('/placeorder/:id', async(req,res) =>{
-        const id = req.params.id;
-        const query = {_id: ObjectId(id)}
-        const result = await orderCollection.findOne(query)
-        res.send(result)
-    })
+    // find one id
+    
+   
 
     // filter login user email
     app.get('/placeorder/:email', async(req,res) =>{
         const email = req.params.email;
-        const query = {email : email}
-        const cursor =  orderCollection.find(query)
-        const result = await cursor.toArray({ })
-        res.send(result)
-    })
+        const query = {email: email}
+        const cursor = orderCollection.find(query)
+        const result = await cursor.toArray()
+        res.send(result);
+      })
 
     // delete order
     app.delete('/placeorder/:id', async(req,res) =>{
@@ -155,6 +150,14 @@ async function run() {
         const cursor = reviewCollection.find({})
         const result = await cursor.toArray()
         res.send(result)
+    })
+
+    // delete product
+    app.delete('/foods/:id', async(req,res) =>{
+        const id = req.params.id;
+        const query = {_id: ObjectId(id)}
+        const result = await foodCollection.deleteOne(query)
+        res.json(result)
     })
 
 
