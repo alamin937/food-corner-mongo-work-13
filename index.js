@@ -2,9 +2,19 @@ const express = require('express')
 var MongoClient = require('mongodb').MongoClient;
 require('dotenv').config()
 const cors = require('cors')
+const admin = require("firebase-admin");
 const ObjectId = require('mongodb').ObjectId
 const fileUpload = require('express-fileupload');
 const app = express();
+
+// food-corner-fb438-firebase-adminsdk-vugj3-7d10877748.json
+
+
+var serviceAccount = require('./food-corner-fb438-firebase-adminsdk-vugj3-7d10877748.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 const port = process.env.PORT || 5000;
 
@@ -23,7 +33,21 @@ app.get('/', (req,res) =>{
 var uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0-shard-00-00.bzphb.mongodb.net:27017,cluster0-shard-00-01.bzphb.mongodb.net:27017,cluster0-shard-00-02.bzphb.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-rs3vfq-shard-0&authSource=admin&retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith('Bearer ')) {
+        const token = req.headers.authorization.split(' ')[1];
 
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(token);
+            req.decodedEmail = decodedUser.email;
+        }
+        catch {
+
+        }
+
+    }
+    next();
+}
 
 
 
@@ -80,12 +104,23 @@ async function run() {
     })
 
     // role add
-    app.put('/users/admin', async(req,res) =>{
+    app.put('/users/admin',verifyToken, async(req,res) =>{
         const user = req.body;
-        const filter = {email: user.email}
-        const updateDoc = {$set: {role: 'admin'}}
-        const result = await userCollection.updateOne(filter,updateDoc)
-        res.json(result)
+        const requester = req.decodedEmail
+
+        if(requester){
+            const requestAccount = await userCollection.findOne({email: requester});
+            if(requestAccount.role === 'admin'){
+                const filter = {email: user.email}
+                const updateDoc = {$set: {role: 'admin'}}
+                const result = await userCollection.updateOne(filter,updateDoc)
+                res.json(result)
+            }
+        }
+        else{
+            res.status(401).json({message: 'you dont have any access'})
+        }
+
     })
 
     // get admin
